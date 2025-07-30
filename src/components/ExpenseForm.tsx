@@ -40,19 +40,20 @@ const ExpenseForm = ({
         <button
           className="cursor-pointer rounded bg-blue-500 p-2 text-white transition hover:bg-blue-600"
           onClick={() => {
-            if (expenseName.trim() !== "" && expenseAmount.trim() !== "") {
+            if (expenseName.trim() === "" || expenseAmount.trim() === "") {
+              toast.error(
+                "Vui lòng nhập đủ tên chi tiêu và số tiền. Số tiền phải là một số hợp lệ.",
+              );
+            } else {
               const expenseAmountNum = parseFloat(expenseAmount);
-              if (isNaN(expenseAmountNum)) {
-                toast.error("Số tiền phải là một số hợp lệ");
+              if (expenseAmountNum < 0) {
+                toast.error("Số tiền không thể âm.");
                 return;
               }
               addExpense(expenseName.trim(), expenseAmountNum, expenseDate);
               setExpenseName("");
               setExpenseAmount("");
-              toast.success("Đã thêm chi tiêu");
-              return;
-            } else {
-              toast.error("Bạn chưa nhập tên chi tiêu hoặc số tiền");
+              toast.success("Đã thêm chi tiêu.");
             }
           }}
         >
