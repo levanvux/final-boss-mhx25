@@ -59,15 +59,34 @@ export default function Home() {
     amount: number,
     date: Date = new Date(),
   ) => {
-    setExpenses([
-      {
-        id: Math.trunc(Math.random() * 1000000),
-        name: name,
-        amount: amount,
-        date,
-      },
-      ...expenses,
-    ]);
+    const realNewDate: Date = typeof date === "string" ? new Date(date) : date;
+    let addPosition: number = 0;
+    for (const expense of expenses) {
+      const realExpenseDate =
+        expense.date instanceof Date ? expense.date : new Date(expense.date);
+
+      if (realExpenseDate.getTime() > realNewDate.getTime()) {
+        addPosition = expenses.indexOf(expense) + 1;
+      }
+    }
+    console.log("addPosition", addPosition);
+    const newExpenses: Expense[] = [...expenses];
+    newExpenses.splice(addPosition, 0, {
+      id: expenses.length + 1,
+      name,
+      amount,
+      date: new Date(
+        (typeof realNewDate === "string"
+          ? new Date(realNewDate).getTime()
+          : realNewDate.getTime()) +
+          (typeof realNewDate === "string"
+            ? new Date(realNewDate).getTimezoneOffset()
+            : realNewDate.getTimezoneOffset()) *
+            60000,
+      ),
+    });
+    console.log(newExpenses);
+    setExpenses(newExpenses);
   };
 
   return (
@@ -76,7 +95,7 @@ export default function Home() {
         <ExpenseForm addExpense={addExpense} />
         <ExpenseList expenses={expenses} />
         <ExpenseSummary total={total} />
-        <button onClick={() => localStorage.clear()}>QWEWEW</button>
+        <button onClick={() => localStorage.clear()}>:D</button>
       </main>
     </div>
   );
