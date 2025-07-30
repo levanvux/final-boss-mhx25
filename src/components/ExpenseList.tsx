@@ -2,7 +2,7 @@
 import { FiSearch, FiFilter, FiTrash2 } from "react-icons/fi";
 import ExpenseItem from "./ExpenseItem";
 import Modal from "./Modal";
-import { Expense, getLocalDate } from "@/app/page";
+import { Expense } from "@/app/page";
 // import { useState } from "react";
 
 const ExpenseList = ({ expenses }: { expenses: Expense[] }) => {
@@ -46,15 +46,9 @@ const ExpenseList = ({ expenses }: { expenses: Expense[] }) => {
           <ExpenseItem
             key={expense.id}
             date={
-              new Date(
-                (typeof expense.date === "string"
-                  ? new Date(expense.date).getTime()
-                  : expense.date.getTime()) +
-                  (typeof expense.date === "string"
-                    ? new Date(expense.date).getTimezoneOffset()
-                    : expense.date.getTimezoneOffset()) *
-                    60000,
-              )
+              expense.date instanceof Date
+                ? expense.date
+                : new Date(expense.date)
             }
             name={expense.name}
             amount={expense.amount}
