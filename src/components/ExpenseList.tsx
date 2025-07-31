@@ -2,34 +2,54 @@
 import { FiSearch, FiFilter, FiTrash2, FiX } from "react-icons/fi";
 import ExpenseItem from "./ExpenseItem";
 import Modal from "./Modal";
-import { Expense, normalizeText } from "@/app/page";
-import { useState, useEffect } from "react";
+import { Expense } from "@/utils/types";
+import { normalizeText } from "@/utils/helpers";
+import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
+import { useDebounce } from "use-debounce";
 
 const ExpenseList = ({
   expenses,
+  updateExpense,
   deleteExpense,
   selectExpense,
+  selectAllExpenses,
   deselectExpense,
+  deselectAllExpenses,
   totalSelected,
+  updateFilteredExpenses,
+  returnFilteredExpenses,
 }: {
   expenses: Expense[];
+  updateExpense: (name: string, amount: string, date: Date) => boolean;
   deleteExpense: () => void;
   selectExpense: (id: number) => void;
+  selectAllExpenses: () => void;
   deselectExpense: (id: number) => void;
+  deselectAllExpenses: () => void;
   totalSelected: number;
+  updateFilteredExpenses: (newExpenses: Expense[]) => void;
+  returnFilteredExpenses: () => void;
 }) => {
   const [openSearchBox, setOpenSearchBox] = useState<boolean>(false);
   const [selectAllChecked, setSelectAllChecked] = useState<boolean>(false);
-  const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>(expenses);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const handleSearch = (searchTerm: string) => {
+    if (openSearchBox && searchRef.current) {
+      searchRef.current.focus();
+    }
+  }, [openSearchBox]);
+
+  useEffect(() => {
+    const handleSearch = () => {
       if (searchTerm.trim() === "") {
-        setFilteredExpenses(expenses);
+        returnFilteredExpenses();
         return;
       }
+
       const normalizedSearchTerm = normalizeText(searchTerm);
       const newFilteredExpenses = expenses.filter(
         (expense) =>
@@ -38,11 +58,11 @@ const ExpenseList = ({
             normalizedSearchTerm,
           ),
       );
-
-      setFilteredExpenses(newFilteredExpenses);
+      updateFilteredExpenses(newFilteredExpenses);
     };
-    handleSearch(searchTerm);
-  }, [expenses, searchTerm]);
+
+    handleSearch();
+  }, [searchTerm, returnFilteredExpenses, updateFilteredExpenses]);
 
   return (
     <div className="container-border h-full">
@@ -59,12 +79,16 @@ const ExpenseList = ({
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
                 }}
+                ref={searchRef}
               />
               <FiX
                 size={25}
                 className="cursor-pointer hover:text-gray-500"
                 title="Tắt tìm kiếm"
-                onClick={() => setOpenSearchBox(false)}
+                onClick={() => {
+                  setOpenSearchBox(false);
+                  setSearchTerm("");
+                }}
               />
             </>
           ) : (
@@ -152,13 +176,9 @@ const ExpenseList = ({
               const nextChecked = !selectAllChecked;
               setSelectAllChecked(nextChecked);
               if (nextChecked) {
-                expenses.forEach((expense) => {
-                  selectExpense(expense.id);
-                });
+                selectAllExpenses();
               } else {
-                expenses.forEach((expense) => {
-                  deselectExpense(expense.id);
-                });
+                deselectAllExpenses();
               }
             }}
           />
@@ -166,9 +186,10 @@ const ExpenseList = ({
           <p>Tên chi tiêu</p>
           <p>Số tiền</p>
         </div>
-        {filteredExpenses.map((expense) => (
+        {expenses.map((expense) => (
           <ExpenseItem
             key={expense.id}
+            updateExpense={updateExpense}
             date={
               expense.date instanceof Date
                 ? expense.date
