@@ -1,19 +1,23 @@
 "use client";
-import { getLocalDate } from "@/app/page";
+import { getLocalDate } from "@/utils/helpers";
 import { useState } from "react";
 
 const ExpenseForm = ({
   title,
-  addExpense,
+  action,
+  updateExpense,
+  closeModal,
 }: {
   title: string;
-  addExpense: (name: string, amount: string, date: Date) => boolean;
+  action: string;
+  updateExpense: (name: string, amount: string, date: Date) => boolean;
+  closeModal?: () => void;
 }) => {
   const [expenseName, setExpenseName] = useState("");
   const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseDate, setExpenseDate] = useState(getLocalDate());
   return (
-    <div className="container-border h-80">
+    <>
       <h1 className="text-2xl font-bold">{title}</h1>
       <div className="mt-4 flex flex-col gap-4">
         <input
@@ -41,16 +45,17 @@ const ExpenseForm = ({
         <button
           className="cursor-pointer rounded bg-blue-500 p-2 text-white transition hover:bg-blue-600"
           onClick={() => {
-            if (addExpense(expenseName.trim(), expenseAmount, expenseDate)) {
+            if (updateExpense(expenseName.trim(), expenseAmount, expenseDate)) {
               setExpenseName("");
               setExpenseAmount("");
+              if (closeModal) closeModal();
             }
           }}
         >
-          Thêm Chi Tiêu
+          {action}
         </button>
       </div>
-    </div>
+    </>
   );
 };
 

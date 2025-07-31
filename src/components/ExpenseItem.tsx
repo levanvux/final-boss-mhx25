@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Modal from "./Modal";
-import { getLocalDate } from "@/app/page";
+import ExpenseForm from "./ExpenseForm";
 
 const ExpenseItem = ({
   date,
@@ -11,6 +11,7 @@ const ExpenseItem = ({
   selectAllChecked,
   selectExpense,
   deselectExpense,
+  updateExpense,
 }: {
   date: Date;
   name: string;
@@ -18,10 +19,11 @@ const ExpenseItem = ({
   selectAllChecked: boolean;
   selectExpense: () => void;
   deselectExpense: () => void;
+  updateExpense: (name: string, amount: string, date: Date) => boolean;
 }) => {
-  const [expenseName, setExpenseName] = useState(name);
-  const [expenseAmount, setExpenseAmount] = useState(amount.toString());
-  const [expenseDate, setExpenseDate] = useState(getLocalDate(date));
+  // const [expenseName, setExpenseName] = useState(name);
+  // const [expenseAmount, setExpenseAmount] = useState(amount.toString());
+  // const [expenseDate, setExpenseDate] = useState(getLocalDate(date));
 
   const [isChecked, setIsChecked] = useState(selectAllChecked);
 
@@ -70,33 +72,12 @@ const ExpenseItem = ({
         }
       >
         {(closeModal) => (
-          <div className="flex flex-col gap-4">
-            <input
-              type="text"
-              placeholder="Tên chi tiêu"
-              className="input-border"
-              value={expenseName}
-              onChange={(e) => setExpenseName(e.target.value)}
-            />
-            <input
-              type="number"
-              placeholder="Số tiền VND"
-              className="input-border"
-              value={expenseAmount}
-              onChange={(e) => setExpenseAmount(e.target.value)}
-            />
-            <input
-              type="datetime-local"
-              className="input-border dark:text-gray-300"
-              value={expenseDate.toISOString().slice(0, 16)}
-              onChange={(e) =>
-                setExpenseDate(getLocalDate(new Date(e.target.value)))
-              }
-            />
-            <button className="cursor-pointer rounded bg-emerald-500 p-2 font-bold text-white transition hover:bg-emerald-600">
-              Hoàn tất
-            </button>
-          </div>
+          <ExpenseForm
+            title="Sửa Chi Tiêu"
+            action="Hoàn Tất"
+            updateExpense={updateExpense}
+            closeModal={closeModal}
+          />
         )}
       </Modal>
     </div>
@@ -104,3 +85,29 @@ const ExpenseItem = ({
 };
 
 export default ExpenseItem;
+
+// <input
+//               type="text"
+//               placeholder="Tên chi tiêu"
+//               className="input-border"
+//               value={expenseName}
+//               onChange={(e) => setExpenseName(e.target.value)}
+//             />
+//             <input
+//               type="number"
+//               placeholder="Số tiền VND"
+//               className="input-border"
+//               value={expenseAmount}
+//               onChange={(e) => setExpenseAmount(e.target.value)}
+//             />
+//             <input
+//               type="datetime-local"
+//               className="input-border dark:text-gray-300"
+//               value={expenseDate.toISOString().slice(0, 16)}
+//               onChange={(e) =>
+//                 setExpenseDate(getLocalDate(new Date(e.target.value)))
+//               }
+//             />
+//             <button className="cursor-pointer rounded bg-emerald-500 p-2 font-bold text-white transition hover:bg-emerald-600">
+//               Hoàn tất
+//             </button>
