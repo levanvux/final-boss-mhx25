@@ -3,10 +3,8 @@ import { FiSearch, FiFilter, FiTrash2, FiX } from "react-icons/fi";
 import ExpenseItem from "./ExpenseItem";
 import Modal from "./Modal";
 import { Expense } from "@/utils/types";
-import { normalizeText } from "@/utils/helpers";
 import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-import { useDebounce } from "use-debounce";
 
 const ExpenseList = ({
   expenses,
@@ -17,8 +15,8 @@ const ExpenseList = ({
   deselectExpense,
   deselectAllExpenses,
   totalSelected,
-  updateFilteredExpenses,
-  returnFilteredExpenses,
+  searchTerm,
+  updateSearchTerm,
 }: {
   expenses: Expense[];
   updateExpense: (name: string, amount: string, date: Date) => boolean;
@@ -28,13 +26,11 @@ const ExpenseList = ({
   deselectExpense: (id: number) => void;
   deselectAllExpenses: () => void;
   totalSelected: number;
-  updateFilteredExpenses: (newExpenses: Expense[]) => void;
-  returnFilteredExpenses: () => void;
+  searchTerm: string;
+  updateSearchTerm: (term: string) => void;
 }) => {
   const [openSearchBox, setOpenSearchBox] = useState<boolean>(false);
   const [selectAllChecked, setSelectAllChecked] = useState<boolean>(false);
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -42,27 +38,6 @@ const ExpenseList = ({
       searchRef.current.focus();
     }
   }, [openSearchBox]);
-
-  useEffect(() => {
-    const handleSearch = () => {
-      if (searchTerm.trim() === "") {
-        returnFilteredExpenses();
-        return;
-      }
-
-      const normalizedSearchTerm = normalizeText(searchTerm);
-      const newFilteredExpenses = expenses.filter(
-        (expense) =>
-          normalizeText(expense.name).includes(normalizedSearchTerm) ||
-          normalizeText(expense.amount.toString()).includes(
-            normalizedSearchTerm,
-          ),
-      );
-      updateFilteredExpenses(newFilteredExpenses);
-    };
-
-    handleSearch();
-  }, [searchTerm, returnFilteredExpenses, updateFilteredExpenses]);
 
   return (
     <div className="container-border h-full">
@@ -77,7 +52,7 @@ const ExpenseList = ({
                 className="rounded border border-gray-300 p-1 text-sm outline-none dark:border-gray-600 dark:bg-gray-700"
                 value={searchTerm}
                 onChange={(e) => {
-                  setSearchTerm(e.target.value);
+                  updateSearchTerm(e.target.value);
                 }}
                 ref={searchRef}
               />
@@ -87,7 +62,7 @@ const ExpenseList = ({
                 title="Tắt tìm kiếm"
                 onClick={() => {
                   setOpenSearchBox(false);
-                  setSearchTerm("");
+                  updateSearchTerm("");
                 }}
               />
             </>

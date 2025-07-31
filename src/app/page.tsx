@@ -2,32 +2,11 @@
 import ExpenseForm from "@/components/ExpenseForm";
 import ExpenseList from "@/components/ExpenseList";
 import ExpenseSummary from "@/components/ExpenseSummary";
+import { Expense } from "@/utils/types";
 import { useState, useEffect, useMemo } from "react";
+import { useDebounce } from "use-debounce";
 import toast from "react-hot-toast";
-
-export type Expense = {
-  id: number;
-  name: string;
-  amount: number;
-  date: Date;
-};
-
-// ham nhan 1 date va tra ve date da chuyen doi sang timezone cua nguoi dung
-export const getLocalDate = (date: Date | string = new Date()) => {
-  const realDate: Date = typeof date === "string" ? new Date(date) : date;
-  return new Date(realDate.getTime() - realDate.getTimezoneOffset() * 60000);
-};
-
-export const normalizeText = (text: string) => {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "d")
-    .replace(/\s+/g, " ")
-    .trim();
-};
+import { normalizeText } from "@/utils/helpers";
 
 export default function Home() {
   const [expenses, setExpenses] = useState<Expense[]>([
@@ -62,14 +41,11 @@ export default function Home() {
     localStorage.setItem("expenses", JSON.stringify(expenses));
   }, [expenses]);
 
-  const total = useMemo(() => {
-    return expenses.reduce((acc, expense) => acc + expense.amount, 0);
-  }, [expenses]);
-
-  const addExpense = (
+  const updateExpense = (
     name: string,
     amount: string,
     date: Date = new Date(),
+    id?: number,
   ) => {
     if (name.trim() === "" || amount.trim() === "") {
       toast.error(
@@ -82,35 +58,40 @@ export default function Home() {
         toast.error("Số tiền không thể âm.");
         return false;
       }
-
-      const realNewDate: Date = date instanceof Date ? date : new Date(date);
-      let addPosition: number = 0;
-      for (const expense of expenses) {
-        const realExpenseDate: Date =
-          expense.date instanceof Date ? expense.date : new Date(expense.date);
-
-        if (realExpenseDate.getTime() > realNewDate.getTime()) {
-          addPosition = expenses.indexOf(expense) + 1;
-        }
-      }
-
-      const newExpenses: Expense[] = [...expenses];
-      newExpenses.splice(addPosition, 0, {
-        id: expenses.length + 1,
+      const expenseId = id ?? Math.trunc(Math.random() * 1000000);
+      const realNewDate: Date = new Date(date);
+      const newExpense = {
+        id: expenseId,
         name,
         amount: expenseAmount,
         date: new Date(
-          (typeof realNewDate === "string"
-            ? new Date(realNewDate).getTime()
-            : realNewDate.getTime()) +
-            (typeof realNewDate === "string"
-              ? new Date(realNewDate).getTimezoneOffset()
-              : realNewDate.getTimezoneOffset()) *
-              60000,
+          realNewDate.getTime() + realNewDate.getTimezoneOffset() * 60000,
         ),
+      };
+
+      let expenseExits: boolean = false;
+      setExpenses((prev) => {
+        expenseExits = prev.some((expense) => expense.id === expenseId);
+        if (expenseExits) {
+          return prev.map((expense) =>
+            expense.id === expenseId ? newExpense : expense,
+          );
+        } else {
+          let addPosition: number = 0;
+          for (const expense of prev) {
+            const realExpenseDate: Date = new Date(expense.date);
+
+            if (realExpenseDate.getTime() > realNewDate.getTime()) {
+              addPosition = expenses.indexOf(expense) + 1;
+            }
+          }
+
+          const newExpenses: Expense[] = [...prev];
+          newExpenses.splice(addPosition, 0, newExpense);
+          return newExpenses;
+        }
       });
-      setExpenses(newExpenses);
-      toast.success("Đã thêm chi tiêu.");
+      toast.success(`Đã ${expenseExits ? "sửa" : "thêm"} chi tiêu.`);
       return true;
     }
   };
@@ -120,9 +101,16 @@ export default function Home() {
   const selectExpense = (id: number) => {
     setSelectedExpenses((prev) => [...prev, id]);
   };
+  const selectAllExpenses = () => {
+    setSelectedExpenses(expenses.map((expense) => expense.id));
+  };
 
   const deselectExpense = (id: number) => {
     setSelectedExpenses((prev) => prev.filter((expenseId) => expenseId !== id));
+  };
+
+  const deselectAllExpenses = () => {
+    setSelectedExpenses([]);
   };
 
   const deleteSelectedExpenses = () => {
@@ -132,16 +120,73 @@ export default function Home() {
     setExpenses(newExpenses);
   };
 
+  const [searchTerm, setSearchTerm] = useState<string>("");
+
+  const updateSearchTerm = (term: string) => {
+    setSearchTerm(term);
+  };
+
+  const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
+
+  const filteredExpenses = useMemo(() => {
+    if (debouncedSearchTerm.trim() === "") {
+      return expenses;
+    }
+
+    const normalizedSearchTerm = normalizeText(debouncedSearchTerm);
+    const newFilteredExpenses = expenses.filter(
+      (expense) =>
+        normalizeText(expense.name).includes(normalizedSearchTerm) ||
+        normalizeText(expense.amount.toString()).includes(normalizedSearchTerm),
+    );
+    return newFilteredExpenses;
+  }, [debouncedSearchTerm, expenses]);
+
+  // useEffect(() => {
+  //   setFilteredExpenses(expenses);
+  // }, [expenses]);
+
+  // const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>(expenses);
+
+  // const updateFilteredExpenses = (newExpenses: Expense[]) => {
+  //   setFilteredExpenses(newExpenses);
+  // };
+
+  // const returnFilteredExpenses = () => {
+  //   setFilteredExpenses(expenses);
+  // };
+
+  // useEffect(() => {
+  //   setFilteredExpenses(expenses);
+  // }, [expenses]);
+
+  const total = useMemo(() => {
+    return filteredExpenses.reduce((acc, expense) => acc + expense.amount, 0);
+  }, [filteredExpenses]);
+
   return (
     <div className="grid min-h-screen justify-items-center p-20 font-sans sm:p-28">
       <main className="grid w-full max-w-screen-xl grid-cols-[4.5fr_11fr_4fr] items-start gap-8">
-        <ExpenseForm title="Thêm Chi Tiêu" addExpense={addExpense} />
+        <div className="container-border h-80">
+          <ExpenseForm
+            title="Thêm Chi Tiêu"
+            action="Thêm Chi Tiêu"
+            updateExpense={updateExpense}
+          />
+        </div>
         <ExpenseList
-          expenses={expenses}
+          expenses={filteredExpenses}
+          updateExpense={updateExpense}
           deleteExpense={deleteSelectedExpenses}
           selectExpense={selectExpense}
+          selectAllExpenses={selectAllExpenses}
           deselectExpense={deselectExpense}
+          deselectAllExpenses={deselectAllExpenses}
           totalSelected={selectedExpenses.length}
+          searchTerm={searchTerm}
+          updateSearchTerm={updateSearchTerm}
+          // updateFilteredExpenses={updateFilteredExpenses}
+          // returnFilteredExpenses={returnFilteredExpenses}
         />
         <ExpenseSummary total={total} />
         <button onClick={() => localStorage.clear()}>:D</button>
