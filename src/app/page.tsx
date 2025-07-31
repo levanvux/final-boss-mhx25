@@ -13,7 +13,7 @@ export type Expense = {
 
 // ham nhan 1 date va tra ve date da chuyen doi sang timezone cua nguoi dung
 export const getLocalDate = (date: Date | string = new Date()) => {
-  const realDate = typeof date === "string" ? new Date(date) : date;
+  const realDate: Date = typeof date === "string" ? new Date(date) : date;
   return new Date(realDate.getTime() - realDate.getTimezoneOffset() * 60000);
 };
 
@@ -62,14 +62,13 @@ export default function Home() {
     const realNewDate: Date = typeof date === "string" ? new Date(date) : date;
     let addPosition: number = 0;
     for (const expense of expenses) {
-      const realExpenseDate =
+      const realExpenseDate: Date =
         expense.date instanceof Date ? expense.date : new Date(expense.date);
 
       if (realExpenseDate.getTime() > realNewDate.getTime()) {
         addPosition = expenses.indexOf(expense) + 1;
       }
     }
-    console.log("addPosition", addPosition);
     const newExpenses: Expense[] = [...expenses];
     newExpenses.splice(addPosition, 0, {
       id: expenses.length + 1,
@@ -85,15 +84,37 @@ export default function Home() {
             60000,
       ),
     });
-    console.log(newExpenses);
+    setExpenses(newExpenses);
+  };
+
+  const [selectedExpenses, setSelectedExpenses] = useState<number[]>([]);
+
+  const selectExpense = (id: number) => {
+    setSelectedExpenses((prev) => [...prev, id]);
+  };
+
+  const deselectExpense = (id: number) => {
+    setSelectedExpenses((prev) => prev.filter((expenseId) => expenseId !== id));
+  };
+
+  const deleteSelectedExpenses = () => {
+    const newExpenses: Expense[] = expenses.filter(
+      (expense) => !selectedExpenses.includes(expense.id),
+    );
     setExpenses(newExpenses);
   };
 
   return (
     <div className="grid min-h-screen justify-items-center p-20 font-sans sm:p-28">
-      <main className="grid w-full max-w-screen-xl grid-cols-[10fr_21fr_9fr] items-start gap-8">
+      <main className="grid w-full max-w-screen-xl grid-cols-[4.5fr_11fr_4fr] items-start gap-8">
         <ExpenseForm addExpense={addExpense} />
-        <ExpenseList expenses={expenses} />
+        <ExpenseList
+          expenses={expenses}
+          deleteExpense={deleteSelectedExpenses}
+          selectExpense={selectExpense}
+          deselectExpense={deselectExpense}
+          totalSelected={selectedExpenses.length}
+        />
         <ExpenseSummary total={total} />
         <button onClick={() => localStorage.clear()}>:D</button>
       </main>
