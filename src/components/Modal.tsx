@@ -22,12 +22,12 @@ const Modal: React.FC<ModalProps> = ({ children, trigger }) => {
         isOpen={showModal}
         onRequestClose={() => closeModal()}
         ariaHideApp={false}
-        className="relative mx-auto w-md max-w-xl rounded-lg bg-white p-8 shadow-lg outline-none"
+        className="relative z-1000 mx-auto w-md max-w-xl rounded-lg bg-white p-9 shadow-lg outline-none"
         overlayClassName="fixed flex items-center justify-center bg-[rgba(0,0,0,0.5)] inset-0 z-1000"
       >
         <FiX
           size={30}
-          className="absolute top-2 right-2 cursor-pointer text-gray-800 hover:text-gray-900"
+          className="absolute top-2 right-2 cursor-pointer text-gray-700 hover:text-gray-900"
           onClick={() => setShowModal(false)}
         />
         {children(closeModal)}

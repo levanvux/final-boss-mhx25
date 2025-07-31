@@ -146,7 +146,7 @@ const ExpenseList = ({
         <div className="grid grid-cols-[1fr_4fr_5fr_3fr_1fr] gap-3 rounded bg-sky-100 p-3 font-bold dark:border-2 dark:border-gray-700 dark:bg-[#0a0a0a]">
           <input
             type="checkbox"
-            className="h-5"
+            className="h-5 cursor-pointer"
             checked={selectAllChecked}
             onChange={() => {
               const nextChecked = !selectAllChecked;

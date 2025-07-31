@@ -3,6 +3,7 @@ import ExpenseForm from "@/components/ExpenseForm";
 import ExpenseList from "@/components/ExpenseList";
 import ExpenseSummary from "@/components/ExpenseSummary";
 import { useState, useEffect, useMemo } from "react";
+import toast from "react-hot-toast";
 
 export type Expense = {
   id: number;
@@ -50,8 +51,6 @@ export default function Home() {
     },
   ]);
 
-  const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>(expenses);
-
   useEffect(() => {
     const saved = localStorage.getItem("expenses");
     if (saved) {
@@ -60,7 +59,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    setFilteredExpenses(expenses);
     localStorage.setItem("expenses", JSON.stringify(expenses));
   }, [expenses]);
 
@@ -70,35 +68,51 @@ export default function Home() {
 
   const addExpense = (
     name: string,
-    amount: number,
+    amount: string,
     date: Date = new Date(),
   ) => {
-    const realNewDate: Date = typeof date === "string" ? new Date(date) : date;
-    let addPosition: number = 0;
-    for (const expense of expenses) {
-      const realExpenseDate: Date =
-        expense.date instanceof Date ? expense.date : new Date(expense.date);
-
-      if (realExpenseDate.getTime() > realNewDate.getTime()) {
-        addPosition = expenses.indexOf(expense) + 1;
+    if (name.trim() === "" || amount.trim() === "") {
+      toast.error(
+        "Vui lòng nhập đủ tên chi tiêu và số tiền. Số tiền phải là một số hợp lệ.",
+      );
+      return false;
+    } else {
+      const expenseAmount: number = parseFloat(amount);
+      if (expenseAmount < 0) {
+        toast.error("Số tiền không thể âm.");
+        return false;
       }
-    }
-    const newExpenses: Expense[] = [...expenses];
-    newExpenses.splice(addPosition, 0, {
-      id: expenses.length + 1,
-      name,
-      amount,
-      date: new Date(
-        (typeof realNewDate === "string"
-          ? new Date(realNewDate).getTime()
-          : realNewDate.getTime()) +
+
+      const realNewDate: Date = date instanceof Date ? date : new Date(date);
+      let addPosition: number = 0;
+      for (const expense of expenses) {
+        const realExpenseDate: Date =
+          expense.date instanceof Date ? expense.date : new Date(expense.date);
+
+        if (realExpenseDate.getTime() > realNewDate.getTime()) {
+          addPosition = expenses.indexOf(expense) + 1;
+        }
+      }
+
+      const newExpenses: Expense[] = [...expenses];
+      newExpenses.splice(addPosition, 0, {
+        id: expenses.length + 1,
+        name,
+        amount: expenseAmount,
+        date: new Date(
           (typeof realNewDate === "string"
-            ? new Date(realNewDate).getTimezoneOffset()
-            : realNewDate.getTimezoneOffset()) *
-            60000,
-      ),
-    });
-    setExpenses(newExpenses);
+            ? new Date(realNewDate).getTime()
+            : realNewDate.getTime()) +
+            (typeof realNewDate === "string"
+              ? new Date(realNewDate).getTimezoneOffset()
+              : realNewDate.getTimezoneOffset()) *
+              60000,
+        ),
+      });
+      setExpenses(newExpenses);
+      toast.success("Đã thêm chi tiêu.");
+      return true;
+    }
   };
 
   const [selectedExpenses, setSelectedExpenses] = useState<number[]>([]);
@@ -121,7 +135,7 @@ export default function Home() {
   return (
     <div className="grid min-h-screen justify-items-center p-20 font-sans sm:p-28">
       <main className="grid w-full max-w-screen-xl grid-cols-[4.5fr_11fr_4fr] items-start gap-8">
-        <ExpenseForm addExpense={addExpense} />
+        <ExpenseForm title="Thêm Chi Tiêu" addExpense={addExpense} />
         <ExpenseList
           expenses={expenses}
           deleteExpense={deleteSelectedExpenses}

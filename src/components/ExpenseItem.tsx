@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Modal from "./Modal";
+import { getLocalDate } from "@/app/page";
 
 const ExpenseItem = ({
   date,
@@ -17,6 +19,10 @@ const ExpenseItem = ({
   selectExpense: () => void;
   deselectExpense: () => void;
 }) => {
+  const [expenseName, setExpenseName] = useState(name);
+  const [expenseAmount, setExpenseAmount] = useState(amount.toString());
+  const [expenseDate, setExpenseDate] = useState(getLocalDate(date));
+
   const [isChecked, setIsChecked] = useState(selectAllChecked);
 
   useEffect(() => {
@@ -24,10 +30,13 @@ const ExpenseItem = ({
   }, [selectAllChecked]);
 
   return (
-    <div className="grid grid-cols-[1fr_4fr_5fr_3fr_1fr] items-center gap-2 rounded p-3 font-bold">
+    <div
+      className="grid grid-cols-[1fr_4fr_5fr_3fr_1fr] items-center gap-2 rounded p-3 font-bold"
+      onClick={() => setIsChecked(!isChecked)}
+    >
       <input
         type="checkbox"
-        className="h-5"
+        className="h-5 cursor-pointer"
         checked={isChecked}
         onChange={() => {
           const nextChecked = !isChecked;
@@ -53,9 +62,43 @@ const ExpenseItem = ({
       </p>
       <p>{name}</p>
       <p>{amount} VND</p>
-      <button className="h-9 w-16 cursor-pointer rounded-md bg-emerald-500 py-1 text-white transition hover:bg-emerald-600">
-        Edit
-      </button>
+      <Modal
+        trigger={
+          <button className="h-9 w-16 cursor-pointer rounded-md bg-emerald-500 py-1 text-white transition hover:bg-emerald-600">
+            Edit
+          </button>
+        }
+      >
+        {(closeModal) => (
+          <div className="flex flex-col gap-4">
+            <input
+              type="text"
+              placeholder="Tên chi tiêu"
+              className="input-border"
+              value={expenseName}
+              onChange={(e) => setExpenseName(e.target.value)}
+            />
+            <input
+              type="number"
+              placeholder="Số tiền VND"
+              className="input-border"
+              value={expenseAmount}
+              onChange={(e) => setExpenseAmount(e.target.value)}
+            />
+            <input
+              type="datetime-local"
+              className="input-border dark:text-gray-300"
+              value={expenseDate.toISOString().slice(0, 16)}
+              onChange={(e) =>
+                setExpenseDate(getLocalDate(new Date(e.target.value)))
+              }
+            />
+            <button className="cursor-pointer rounded bg-emerald-500 p-2 font-bold text-white transition hover:bg-emerald-600">
+              Hoàn tất
+            </button>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
