@@ -52,48 +52,50 @@ export default function Home() {
         "Vui lòng nhập đủ tên chi tiêu và số tiền. Số tiền phải là một số hợp lệ.",
       );
       return false;
-    } else {
-      const expenseAmount: number = parseFloat(amount);
-      if (expenseAmount < 0) {
-        toast.error("Số tiền không thể âm.");
-        return false;
-      }
-      const expenseId = id ?? Math.trunc(Math.random() * 1000000);
-      const realNewDate: Date = new Date(date);
-      const newExpense = {
-        id: expenseId,
-        name,
-        amount: expenseAmount,
-        date: new Date(
-          realNewDate.getTime() + realNewDate.getTimezoneOffset() * 60000,
-        ),
-      };
-
-      let expenseExits: boolean = false;
-      setExpenses((prev) => {
-        expenseExits = prev.some((expense) => expense.id === expenseId);
-        if (expenseExits) {
-          return prev.map((expense) =>
-            expense.id === expenseId ? newExpense : expense,
-          );
-        } else {
-          let addPosition: number = 0;
-          for (const expense of prev) {
-            const realExpenseDate: Date = new Date(expense.date);
-
-            if (realExpenseDate.getTime() > realNewDate.getTime()) {
-              addPosition = expenses.indexOf(expense) + 1;
-            }
-          }
-
-          const newExpenses: Expense[] = [...prev];
-          newExpenses.splice(addPosition, 0, newExpense);
-          return newExpenses;
-        }
-      });
-      toast.success(`Đã ${expenseExits ? "sửa" : "thêm"} chi tiêu.`);
-      return true;
     }
+
+    const expenseAmount: number = parseFloat(amount);
+    if (expenseAmount < 0) {
+      toast.error("Số tiền không thể âm.");
+      return false;
+    }
+
+    const expenseId = id ?? Math.trunc(Math.random() * 1000000);
+    const realNewDate: Date = new Date(date);
+    const newExpense = {
+      id: expenseId,
+      name,
+      amount: expenseAmount,
+      date: new Date(
+        realNewDate.getTime() + realNewDate.getTimezoneOffset() * 60000,
+      ),
+    };
+
+    let expenseExits: boolean = false;
+
+    setExpenses((prev) => {
+      // expenseExits = prev.some((expense) => expense.id === expenseId);
+      const updatedExpenses = prev.map((expense) =>
+        expense.id === id ? ((expenseExits = true), newExpense) : expense,
+      );
+      if (expenseExits) return updatedExpenses;
+
+      const addPosition: number = prev.findIndex((expense) => {
+        const expenseDate: Date = new Date(expense.date);
+        return realNewDate.getTime() > expenseDate.getTime();
+      });
+
+      const newExpenses = [...prev];
+      if (addPosition === -1) {
+        newExpenses.push(newExpense);
+      } else {
+        newExpenses.splice(addPosition, 0, newExpense);
+      }
+      return newExpenses;
+    });
+
+    toast.success(`Đã ${expenseExits ? "sửa" : "thêm"} chi tiêu.`);
+    return true;
   };
 
   const [selectedExpenses, setSelectedExpenses] = useState<number[]>([]);
@@ -142,24 +144,6 @@ export default function Home() {
     return newFilteredExpenses;
   }, [debouncedSearchTerm, expenses]);
 
-  // useEffect(() => {
-  //   setFilteredExpenses(expenses);
-  // }, [expenses]);
-
-  // const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>(expenses);
-
-  // const updateFilteredExpenses = (newExpenses: Expense[]) => {
-  //   setFilteredExpenses(newExpenses);
-  // };
-
-  // const returnFilteredExpenses = () => {
-  //   setFilteredExpenses(expenses);
-  // };
-
-  // useEffect(() => {
-  //   setFilteredExpenses(expenses);
-  // }, [expenses]);
-
   const total = useMemo(() => {
     return filteredExpenses.reduce((acc, expense) => acc + expense.amount, 0);
   }, [filteredExpenses]);
@@ -185,11 +169,8 @@ export default function Home() {
           totalSelected={selectedExpenses.length}
           searchTerm={searchTerm}
           updateSearchTerm={updateSearchTerm}
-          // updateFilteredExpenses={updateFilteredExpenses}
-          // returnFilteredExpenses={returnFilteredExpenses}
         />
         <ExpenseSummary total={total} />
-        <button onClick={() => localStorage.clear()}>:D</button>
       </main>
     </div>
   );
