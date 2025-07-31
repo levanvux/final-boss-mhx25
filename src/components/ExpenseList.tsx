@@ -1,9 +1,9 @@
 "use client";
-import { FiSearch, FiFilter, FiTrash2 } from "react-icons/fi";
+import { FiSearch, FiFilter, FiTrash2, FiX } from "react-icons/fi";
 import ExpenseItem from "./ExpenseItem";
 import Modal from "./Modal";
-import { Expense } from "@/app/page";
-import { useState } from "react";
+import { Expense, normalizeText } from "@/app/page";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 
 const ExpenseList = ({
@@ -19,19 +19,62 @@ const ExpenseList = ({
   deselectExpense: (id: number) => void;
   totalSelected: number;
 }) => {
-  // const [openSearchBox, setOpenSearchBox] = useState<boolean>(false);
+  const [openSearchBox, setOpenSearchBox] = useState<boolean>(false);
   const [selectAllChecked, setSelectAllChecked] = useState<boolean>(false);
+  const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>(expenses);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+
+  useEffect(() => {
+    const handleSearch = (searchTerm: string) => {
+      if (searchTerm.trim() === "") {
+        setFilteredExpenses(expenses);
+        return;
+      }
+      const normalizedSearchTerm = normalizeText(searchTerm);
+      const newFilteredExpenses = expenses.filter(
+        (expense) =>
+          normalizeText(expense.name).includes(normalizedSearchTerm) ||
+          normalizeText(expense.amount.toString()).includes(
+            normalizedSearchTerm,
+          ),
+      );
+
+      setFilteredExpenses(newFilteredExpenses);
+    };
+    handleSearch(searchTerm);
+  }, [expenses, searchTerm]);
 
   return (
     <div className="container-border h-full">
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Các khoản chi tiêu</h1>
-        <div className="flex gap-3 select-none">
-          <FiSearch
-            size={25}
-            className="cursor-pointer hover:text-gray-500"
-            title="Tìm kiếm chi tiêu"
-          />
+        <div className="flex items-center gap-3 select-none">
+          {openSearchBox ? (
+            <>
+              <input
+                type="text"
+                placeholder="Tìm kiếm chi tiêu theo tên"
+                className="rounded border border-gray-300 p-1 text-sm outline-none dark:border-gray-600 dark:bg-gray-700"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                }}
+              />
+              <FiX
+                size={25}
+                className="cursor-pointer hover:text-gray-500"
+                title="Tắt tìm kiếm"
+                onClick={() => setOpenSearchBox(false)}
+              />
+            </>
+          ) : (
+            <FiSearch
+              size={25}
+              className="cursor-pointer hover:text-gray-500"
+              title="Tìm kiếm chi tiêu"
+              onClick={() => setOpenSearchBox(true)}
+            />
+          )}
 
           <Modal
             trigger={
@@ -57,7 +100,7 @@ const ExpenseList = ({
             >
               {(closeModal) => (
                 <>
-                  <h1 className="text-center">
+                  <h1 className="text-center text-gray-800">
                     Bạn có chắc chắn muốn xóa{" "}
                     <span className="text-lg font-bold text-red-600">
                       {totalSelected}
@@ -123,7 +166,7 @@ const ExpenseList = ({
           <p>Tên chi tiêu</p>
           <p>Số tiền</p>
         </div>
-        {expenses.map((expense) => (
+        {filteredExpenses.map((expense) => (
           <ExpenseItem
             key={expense.id}
             date={

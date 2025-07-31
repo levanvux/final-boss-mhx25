@@ -17,6 +17,17 @@ export const getLocalDate = (date: Date | string = new Date()) => {
   return new Date(realDate.getTime() - realDate.getTimezoneOffset() * 60000);
 };
 
+export const normalizeText = (text: string) => {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "d")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
 export default function Home() {
   const [expenses, setExpenses] = useState<Expense[]>([
     {
@@ -39,6 +50,8 @@ export default function Home() {
     },
   ]);
 
+  const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>(expenses);
+
   useEffect(() => {
     const saved = localStorage.getItem("expenses");
     if (saved) {
@@ -47,6 +60,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    setFilteredExpenses(expenses);
     localStorage.setItem("expenses", JSON.stringify(expenses));
   }, [expenses]);
 
