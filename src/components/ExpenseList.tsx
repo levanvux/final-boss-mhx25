@@ -1,10 +1,10 @@
 "use client";
+import { useState, useEffect, useRef } from "react";
 import { FiSearch, FiFilter, FiTrash2, FiX } from "react-icons/fi";
+import toast from "react-hot-toast";
 import ExpenseItem from "./ExpenseItem";
 import Modal from "./Modal";
 import { Expense } from "@/utils/types";
-import { useState, useEffect, useRef } from "react";
-import toast from "react-hot-toast";
 
 const ExpenseList = ({
   expenses,
@@ -32,6 +32,22 @@ const ExpenseList = ({
   const [openSearchBox, setOpenSearchBox] = useState<boolean>(false);
   const [selectAllChecked, setSelectAllChecked] = useState<boolean>(false);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
+  const openFilterModal = () => {
+    setIsFilterModalOpen(true);
+  };
+  const closeFilterModal = () => {
+    setIsFilterModalOpen(false);
+  };
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const openDeleteModal = () => {
+    setIsDeleteModalOpen(true);
+  };
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+  };
 
   useEffect(() => {
     if (openSearchBox && searchRef.current) {
@@ -76,6 +92,9 @@ const ExpenseList = ({
           )}
 
           <Modal
+            isModalOpen={isFilterModalOpen}
+            openModal={openFilterModal}
+            closeModal={closeFilterModal}
             trigger={
               <FiFilter
                 size={25}
@@ -84,11 +103,24 @@ const ExpenseList = ({
               />
             }
           >
-            {(closeModal) => <h1>Ban la dep trai nhat</h1>}
+            {
+              <div className="flex flex-col items-center justify-center gap-5 text-xl">
+                <h1 className="text-gray-800">Bạn là đẹp trai nhất</h1>
+                <button
+                  className="cursor-pointer rounded bg-red-500 px-3 py-1 font-bold text-white hover:bg-red-600"
+                  onClick={() => closeFilterModal()}
+                >
+                  Đồng ý
+                </button>
+              </div>
+            }
           </Modal>
 
           {totalSelected > 0 ? (
             <Modal
+              isModalOpen={isDeleteModalOpen}
+              openModal={openDeleteModal}
+              closeModal={closeDeleteModal}
               trigger={
                 <FiTrash2
                   size={25}
@@ -97,7 +129,7 @@ const ExpenseList = ({
                 />
               }
             >
-              {(closeModal) => (
+              {
                 <>
                   <h1 className="text-center text-gray-800">
                     Bạn có chắc chắn muốn xóa{" "}
@@ -112,7 +144,7 @@ const ExpenseList = ({
                       onClick={() => {
                         deleteExpense();
                         setSelectAllChecked(false);
-                        closeModal();
+                        closeDeleteModal();
                       }}
                     >
                       Xác nhận
@@ -120,14 +152,14 @@ const ExpenseList = ({
                     <button
                       className="cursor-pointer rounded-md bg-neutral-200 px-4 py-2 text-gray-700 transition hover:bg-neutral-300"
                       onClick={() => {
-                        closeModal();
+                        closeDeleteModal();
                       }}
                     >
                       Hủy bỏ
                     </button>
                   </div>
                 </>
-              )}
+              }
             </Modal>
           ) : (
             <FiTrash2
@@ -148,7 +180,7 @@ const ExpenseList = ({
             className="h-5 cursor-pointer"
             checked={selectAllChecked}
             onChange={() => {
-              const nextChecked = !selectAllChecked;
+              const nextChecked: boolean = !selectAllChecked;
               setSelectAllChecked(nextChecked);
               if (nextChecked) {
                 selectAllExpenses();
@@ -164,14 +196,8 @@ const ExpenseList = ({
         {expenses.map((expense) => (
           <ExpenseItem
             key={expense.id}
+            expense={expense}
             updateExpense={updateExpense}
-            date={
-              expense.date instanceof Date
-                ? expense.date
-                : new Date(expense.date)
-            }
-            name={expense.name}
-            amount={expense.amount}
             selectAllChecked={selectAllChecked}
             selectExpense={() => selectExpense(expense.id)}
             deselectExpense={() => deselectExpense(expense.id)}

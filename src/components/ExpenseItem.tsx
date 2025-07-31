@@ -3,29 +3,34 @@
 import { useEffect, useState } from "react";
 import Modal from "./Modal";
 import ExpenseForm from "./ExpenseForm";
+import { Expense } from "@/utils/types";
 
 const ExpenseItem = ({
-  date,
-  name,
-  amount,
+  expense,
   selectAllChecked,
   selectExpense,
   deselectExpense,
   updateExpense,
 }: {
-  date: Date;
-  name: string;
-  amount: number;
+  expense: Expense;
   selectAllChecked: boolean;
   selectExpense: () => void;
   deselectExpense: () => void;
   updateExpense: (name: string, amount: string, date: Date) => boolean;
 }) => {
-  // const [expenseName, setExpenseName] = useState(name);
-  // const [expenseAmount, setExpenseAmount] = useState(amount.toString());
-  // const [expenseDate, setExpenseDate] = useState(getLocalDate(date));
+  const expenseName: string = expense.name;
+  const expenseAmount: string = expense.amount.toString();
+  const expenseDate: Date = new Date(expense.date);
 
-  const [isChecked, setIsChecked] = useState(selectAllChecked);
+  const [isChecked, setIsChecked] = useState<boolean>(selectAllChecked);
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const openEditModal = () => {
+    setIsEditModalOpen(true);
+  };
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+  };
 
   useEffect(() => {
     setIsChecked(selectAllChecked);
@@ -34,7 +39,9 @@ const ExpenseItem = ({
   return (
     <div
       className="grid grid-cols-[1fr_4fr_5fr_3fr_1fr] items-center gap-2 rounded p-3 font-bold"
-      onClick={() => setIsChecked(!isChecked)}
+      onClick={() => {
+        if (!isEditModalOpen) setIsChecked(!isChecked);
+      }}
     >
       <input
         type="checkbox"
@@ -51,63 +58,53 @@ const ExpenseItem = ({
         }}
       />
       <p>
-        {`${date.getDate().toString().padStart(2, "0")}-${(date.getMonth() + 1)
+        {`${expenseDate.getDate().toString().padStart(2, "0")}-${(
+          expenseDate.getMonth() + 1
+        )
           .toString()
-          .padStart(2, "0")}-${date.getFullYear()}`}{" "}
-        <span className="text-gray-600">{`${date
+          .padStart(2, "0")}-${expenseDate.getFullYear()}`}{" "}
+        <span className="text-gray-600">{`${expenseDate
           .getHours()
           .toString()
           .padStart(
             2,
             "0",
-          )}:${date.getMinutes().toString().padStart(2, "0")}`}</span>
+          )}:${expenseDate.getMinutes().toString().padStart(2, "0")}`}</span>
       </p>
-      <p>{name}</p>
-      <p>{amount} VND</p>
+      <p>{expenseName}</p>
+      <p>{expenseAmount} VND</p>
       <Modal
+        isModalOpen={isEditModalOpen}
+        openModal={openEditModal}
+        closeModal={closeEditModal}
+        extraClassName="dark:bg-gray-600"
         trigger={
-          <button className="h-9 w-16 cursor-pointer rounded-md bg-emerald-500 py-1 text-white transition hover:bg-emerald-600">
+          <button
+            className="h-9 w-16 cursor-pointer rounded-md bg-emerald-500 py-1 text-white transition hover:bg-emerald-600"
+            onClick={(e) => {
+              e.stopPropagation();
+              openEditModal();
+            }}
+          >
             Edit
           </button>
         }
       >
-        {(closeModal) => (
+        {
           <ExpenseForm
             title="Sửa Chi Tiêu"
             action="Hoàn Tất"
+            expenseId={expense.id}
+            initialExpenseName={expenseName}
+            initialExpenseAmount={expenseAmount}
+            initialExpenseDate={expenseDate}
             updateExpense={updateExpense}
-            closeModal={closeModal}
+            closeForm={closeEditModal}
           />
-        )}
+        }
       </Modal>
     </div>
   );
 };
 
 export default ExpenseItem;
-
-// <input
-//               type="text"
-//               placeholder="Tên chi tiêu"
-//               className="input-border"
-//               value={expenseName}
-//               onChange={(e) => setExpenseName(e.target.value)}
-//             />
-//             <input
-//               type="number"
-//               placeholder="Số tiền VND"
-//               className="input-border"
-//               value={expenseAmount}
-//               onChange={(e) => setExpenseAmount(e.target.value)}
-//             />
-//             <input
-//               type="datetime-local"
-//               className="input-border dark:text-gray-300"
-//               value={expenseDate.toISOString().slice(0, 16)}
-//               onChange={(e) =>
-//                 setExpenseDate(getLocalDate(new Date(e.target.value)))
-//               }
-//             />
-//             <button className="cursor-pointer rounded bg-emerald-500 p-2 font-bold text-white transition hover:bg-emerald-600">
-//               Hoàn tất
-//             </button>

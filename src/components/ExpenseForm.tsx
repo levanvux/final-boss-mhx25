@@ -1,21 +1,40 @@
 "use client";
-import { getLocalDate } from "@/utils/helpers";
+
 import { useState } from "react";
+import { getLocalDate } from "@/utils/helpers";
 
 const ExpenseForm = ({
   title,
   action,
+  expenseId,
+  initialExpenseName,
+  initialExpenseAmount,
+  initialExpenseDate,
   updateExpense,
-  closeModal,
+  closeForm,
 }: {
   title: string;
   action: string;
-  updateExpense: (name: string, amount: string, date: Date) => boolean;
-  closeModal?: () => void;
+  expenseId?: number;
+  initialExpenseName?: string;
+  initialExpenseAmount?: string;
+  initialExpenseDate?: Date;
+  updateExpense: (
+    name: string,
+    amount: string,
+    date: Date,
+    id?: number,
+  ) => boolean;
+  closeForm?: () => void;
 }) => {
-  const [expenseName, setExpenseName] = useState("");
-  const [expenseAmount, setExpenseAmount] = useState("");
-  const [expenseDate, setExpenseDate] = useState(getLocalDate());
+  const [expenseName, setExpenseName] = useState(initialExpenseName ?? "");
+  const [expenseAmount, setExpenseAmount] = useState(
+    initialExpenseAmount ?? "",
+  );
+  const [expenseDate, setExpenseDate] = useState(
+    getLocalDate(initialExpenseDate),
+  );
+
   return (
     <>
       <h1 className="text-2xl font-bold">{title}</h1>
@@ -45,10 +64,17 @@ const ExpenseForm = ({
         <button
           className="cursor-pointer rounded bg-blue-500 p-2 text-white transition hover:bg-blue-600"
           onClick={() => {
-            if (updateExpense(expenseName.trim(), expenseAmount, expenseDate)) {
+            if (
+              updateExpense(
+                expenseName.trim(),
+                expenseAmount,
+                expenseDate,
+                expenseId,
+              )
+            ) {
               setExpenseName("");
               setExpenseAmount("");
-              if (closeModal) closeModal();
+              if (closeForm) closeForm();
             }
           }}
         >
